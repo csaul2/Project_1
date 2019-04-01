@@ -1,0 +1,75 @@
+public class BankAccountCreate {
+    public static void onCreate(List<BankAccount__c> bankList) {
+        List<Transaction__c> transactionList = new List<Transaction__c>();
+        
+        // To keep this feature the income budget becomes required do to the nature of the master-deatil
+        Budget__c incBudget;
+        try {
+            incBudget = [SELECT Id FROM Budget__c WHERE Name = 'Income' LIMIT 1];
+        } catch(QueryException e){
+            incBudget = new Budget__c();
+            incBudget.Name = 'Income';
+            
+            insert incBudget;
+        }
+        
+        for (BankAccount__c bc : bankList) {
+            // Create new transactions based on the bank account
+            // This is done to ensure accurate balance caluculations.
+            Transaction__c t = new Transaction__c();
+            t.Name = 'System Created: ' + bc.Name;
+            t.Amount__c = Math.abs(bc.AccountBalance__c);
+            t.OnAccountCreation__c = true;
+            t.Date__c = System.today();
+            t.BankAccount__c = bc.Id;
+            if(bc.AccountBalance__c < 0) {
+                t.Deposit__c = false;
+            } else {
+                t.Deposit__c = true;
+            }
+            t.Budget_Category__c = incBudget.Id;
+            
+            transactionList.add(t);
+        }
+        
+        insert transactionList;
+    }
+    
+    public static void onUpdate(List<BankAccount__c> bankNewList, List<BankAccount__c> bankOldList) {
+		Integer length = bankNewList.size();
+        List<Transaction__c> transactionList = new List<Transaction__c>();
+        
+        Budget__c incBudget;
+        try {
+            incBudget = [SELECT Id FROM Budget__c WHERE Name = 'Income' LIMIT 1];
+        } catch(QueryException e){
+            incBudget = new Budget__c();
+            incBudget.Name = 'Income';
+            
+            insert incBudget;
+        }
+        
+        for (Integer i = 0; i < length; i++) {
+            Decimal change = bankNewList[i].AccountBalance__c - bankOldList[i].AccountBalance__c;
+            
+            if(change != 0.0) {
+                Transaction__c t = new Transaction__c();
+            	t.Name = 'System Balance Adjustment: ' + bankNewList[i].Name;
+            	t.Amount__c = Math.abs(change);
+            	t.OnAccountCreation__c = true;
+                t.Date__c = System.today();
+                t.BankAccount__c = bankNewList[i].Id;
+                if(change < 0) {
+                    t.Deposit__c = false;
+                } else {
+                    t.Deposit__c = true;
+                }
+                t.Budget_Category__c = incBudget.Id;
+                
+                transactionList.add(t);
+            }
+        }
+        
+        insert transactionList;
+    }
+}

@@ -1,0 +1,17 @@
+public class TransactionCloneExtension {
+    public Transaction__c ta {get; set;}
+    public List<String> fieldList = new List<String>{'BankAccount__c','Budget_Category__c', 'Deposit__c', 'OnAccountCreation__c', 'Name'};
+    
+    public TransactionCloneExtension(ApexPages.StandardController stdController){
+        stdController.addFields(fieldList);
+        ta = (Transaction__c)stdController.getRecord();
+    }
+    
+    public PageReference save() {
+        Transaction__c copy = ta.clone(false, true);
+        insert copy;
+        
+        PageReference url = new PageReference('/' + copy.Id);
+        return url;
+    }
+}

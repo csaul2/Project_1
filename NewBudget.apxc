@@ -1,0 +1,17 @@
+public class NewBudget {
+	@InvocableMethod(label='Create follow up budget' description='Makes a budget for the next month as the current ends')
+    public static List<Budget__c> NewBudget(List<Budget__c> budgetList){
+        List<Budget__c> newBudgetList = new List<Budget__c>();
+        
+        for (Budget__c b : budgetList){
+            Budget__c newBudget = new Budget__c();
+            newBudget.Name = b.Name;
+            newBudget.Monthly_Budget__c = b.Monthly_Budget__c;
+            
+            newBudgetList.add(newBudget);
+        }
+        
+        insert newBudgetList;
+        return null;
+    }
+}
